@@ -3,10 +3,12 @@
 Dashboard statis untuk membaca laporan XLSX kepemilikan efek di atas 5% berdasarkan SID.
 
 ## Cara menggunakan
-1. Buka situs GitHub Pages setelah Pages diaktifkan pada Settings → Pages.
-2. Pilih file laporan pembanding pada input pertama dan file laporan terbaru pada input kedua.
-3. Klik **Analisis laporan**.
-4. Gunakan pencarian dan filter untuk mengeksplorasi data; klik header tabel untuk mengurutkan; gunakan **Ekspor CSV** untuk menyimpan hasil filter.
+1. Buka repository → **Settings → Pages**.
+2. Pada **Build and deployment → Source**, pilih **GitHub Actions**, lalu simpan.
+3. Buka tab **Actions** dan jalankan ulang workflow **Deploy dashboard to GitHub Pages** yang gagal sebelumnya (Re-run jobs). Setelah itu, setiap commit ke `main` akan memicu deployment otomatis.
+4. Pilih file laporan pembanding pada input pertama dan file laporan terbaru pada input kedua.
+5. Klik **Analisis laporan**.
+6. Gunakan pencarian dan filter untuk mengeksplorasi data; klik header tabel untuk mengurutkan; gunakan **Ekspor CSV** untuk menyimpan hasil filter.
 
 ## Catatan interpretasi
 - File Excel diproses di browser pengguna; dashboard tidak mengunggah file ke server.
