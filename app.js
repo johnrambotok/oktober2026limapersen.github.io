@@ -13,7 +13,7 @@ function parse(wb,name){
  for(let i=h+2;i<a.length;i++){
   const r=a[i]||[];let code=t(r[1]);
   const hasRowData=[r[3],r[4],r[5],r[6],r[9],r[10]].some(v=>t(v)!=='');
-  if(code)lastCode=code;else if(hasRowData)code=lastCode;
+  if(code&&code!==lastCode){lastCode=code;lastIssuer='';lastInvestor='';}else if(!code&&hasRowData)code=lastCode;
   if(!code||code==='Kode Efek'||/^catatan/i.test(code))continue;
   let issuer=t(r[2]);if(issuer)lastIssuer=issuer;else issuer=lastIssuer;
   let investor=t(r[4]);if(investor)lastInvestor=investor;else investor=lastInvestor;
