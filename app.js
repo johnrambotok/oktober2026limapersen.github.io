@@ -1,5 +1,5 @@
 const $=id=>document.getElementById(id);
-let rows=[],pageNo=0,sortKey='code',sortDir=1,chart1=null,chart2=null;
+let rows=[],pageNo=0,sortKey='code',sortDir=1,chart1=null,chart2=null,comparing=false;
 const t=v=>v==null?'':String(v).trim();
 const n=(v,blankNull=false)=>{if(v==null||t(v)===''||t(v)==='-')return blankNull?null:0;if(typeof v==='number')return v;const x=Number(String(v).replace(/,/g,'').replace(/%/g,'').trim());return Number.isFinite(x)?x:(blankNull?null:0)};
 const f=v=>v==null||v===''?'—':Number(v).toLocaleString('id-ID',{maximumFractionDigits:2});
@@ -29,7 +29,7 @@ async function load(){
  const of=$('older').files[0],nf=$('newer').files[0];if(!of&&!nf){alert('Pilih minimal satu file Excel.');return}
  $('status').textContent='Sedang membaca dan membandingkan file…';$('load').disabled=true;
  try{
-  const old=of?await read(of):null,latest=nf?await read(nf):old;
+  const old=of?await read(of):null,latest=nf?await read(nf):old;comparing=!!(old&&nf);
   const oldMap=new Map();if(old)for(const r of old.data)oldMap.set(key(r),r);
   const latestKeys=new Set(latest.data.map(key));
   rows=latest.data.map(r=>{
@@ -50,7 +50,7 @@ async function load(){
 function fillFilters(){const ss=[...new Set(rows.map(r=>r.code))].sort(),ds=[...new Set(rows.map(r=>r.dom).filter(Boolean))].sort();$('stock').innerHTML='<option value="">Semua kode</option>'+ss.map(v=>'<option>'+esc(v)+'</option>').join('');$('dom').innerHTML='<option value="">Semua domisili</option>'+ds.map(v=>'<option>'+esc(v)+'</option>').join('')}
 function filtered(){
  const q=$('q').value.toLowerCase(),s=$('stock').value,na=$('nationality').value,d=$('dom').value,c=$('change').value;
- return rows.filter(r=>(!q||[r.code,r.issuer,r.investor,r.account,r.accountName].join(' ').toLowerCase().includes(q))&&(!s||r.code===s)&&(!na||r.nationality===na)&&(!d||r.dom===d)&&(!c||(c==='yes'&&r.changed)||(c==='no'&&!r.changed)||(c==='up'&&r.delta!=null&&r.delta>0)||(c==='down'&&r.delta!=null&&r.delta<0))).sort((a,b)=>{const x=a[sortKey]??'',y=b[sortKey]??'';return(typeof x==='number'&&typeof y==='number'?x-y:String(x).localeCompare(String(y),'id'))*sortDir});
+ return rows.filter(r=>(!q||[r.code,r.issuer,r.investor,r.account,r.accountName].join(' ').toLowerCase().includes(q))&&(!s||r.code===s)&&(!na||r.nationality===na)&&(!d||r.dom===d)&&(!c||(c==='yes'&&r.changed)||(c==='no'&&!r.changed)||(c==='up'&&r.delta!=null&&r.delta>0)||(c==='down'&&r.delta!=null&&r.delta<0)||(c==='unmatched'&&comparing&&!r.matchFound))).sort((a,b)=>{const x=a[sortKey]??'',y=b[sortKey]??'';return(typeof x==='number'&&typeof y==='number'?x-y:String(x).localeCompare(String(y),'id'))*sortDir});
 }
 function kpis(){
  $('rows').textContent=f(rows.filter(r=>r.foundInLatest).length);
@@ -67,7 +67,7 @@ function charts(){
 }
 function render(){
  const a=filtered(),pages=Math.max(1,Math.ceil(a.length/50));pageNo=Math.min(pageNo,pages-1);
- $('body').innerHTML=a.slice(pageNo*50,(pageNo+1)*50).map(r=>'<tr><td>'+esc(r.code)+'</td><td>'+esc(r.issuer)+'</td><td>'+esc(r.investor)+'</td><td>'+esc(r.account)+'</td><td>'+esc(r.nationality||'—')+'</td><td>'+esc(r.dom||'—')+'</td><td>'+f(r.shares)+'</td><td>'+f(r.combined)+'</td><td>'+f(r.pct)+'%</td><td>'+f(r.prevPct)+'%</td><td class="'+(r.delta>0?'up':r.delta<0?'down':'')+'">'+(r.delta>0?'+':'')+f(r.delta)+'</td><td>'+(r.foundInLatest?(r.changed?'Berubah':'Tidak berubah'):'Tidak ditemukan di laporan terbaru')+'</td></tr>').join('')||'<tr><td colspan="12">Tidak ada baris yang cocok.</td></tr>';
+ $('body').innerHTML=a.slice(pageNo*50,(pageNo+1)*50).map(r=>'<tr><td>'+esc(r.code)+'</td><td>'+esc(r.issuer)+'</td><td>'+esc(r.investor)+'</td><td>'+esc(r.account)+'</td><td>'+esc(r.nationality||'—')+'</td><td>'+esc(r.dom||'—')+'</td><td>'+f(r.shares)+'</td><td>'+f(r.combined)+'</td><td>'+f(r.pct)+'%</td><td>'+f(r.prevPct)+'%</td><td class="'+(r.delta>0?'up':r.delta<0?'down':'')+'">'+(r.delta>0?'+':'')+f(r.delta)+'</td><td>'+(r.foundInLatest?(comparing&&!r.matchFound?'Tidak cocok di pembanding':(r.changed?'Berubah':'Tidak berubah')):'Tidak ditemukan di laporan terbaru')+'</td></tr>').join('')||'<tr><td colspan="12">Tidak ada baris yang cocok.</td></tr>';
  $('count').textContent=f(a.length)+' baris cocok · '+f(rows.length)+' total termasuk baris yang tidak ditemukan';$('page').textContent='Halaman '+(pageNo+1)+' / '+pages;$('prev').disabled=pageNo===0;$('next').disabled=pageNo>=pages-1;
 }
 function exportCsv(){
