@@ -43,7 +43,6 @@ async function load(){
   });
   if(old&&nf){for(const p of old.data){if(!latestKeys.has(key(p)))rows.push({...p,pct:null,shares:null,combined:null,prevPct:p.pct,delta:null,priorShares:p.shares,shareDelta:null,change:'Tidak ditemukan pada laporan terbaru',changed:false,foundInLatest:false,matchFound:true})}}
   $('status').textContent=old&&nf?'Data siap · '+old.date+' → '+latest.date+' · '+rows.length.toLocaleString('id-ID')+' baris':'Data siap · '+latest.date+' · '+rows.length.toLocaleString('id-ID')+' baris';
-  $('olderName').textContent=of?of.name:'Belum dipilih';$('newerName').textContent=nf?nf.name:'Belum dipilih';
   fillFilters();kpis();charts();pageNo=0;render();
  }catch(e){console.error(e);$('status').textContent='Gagal membaca file: '+e.message;alert('Gagal membaca Excel: '+e.message)}finally{$('load').disabled=false}
 }
