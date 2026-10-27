@@ -18,7 +18,7 @@ function parse(wb,name){
   let issuer=t(r[2]);if(issuer)lastIssuer=issuer;else issuer=lastIssuer;
   let investor=t(r[4]);if(investor)lastInvestor=investor;else investor=lastInvestor;
   if(!investor)continue;
-  out.push({code,issuer,account:t(r[3]),investor,accountName:t(r[5]),address:t(r[6]),address2:t(r[7]),nationality:t(r[10]).toUpperCase(),dom:t(r[9]),
+  out.push({code,issuer,account:t(r[3]),investor,accountName:t(r[5]),address:t(r[6]),address2:t(r[7]),citizenship:t(r[8]),dom:t(r[9]),nationality:t(r[10]).toUpperCase(),
    prevShares:n(r[11]),prevCombined:n(r[12],true),prevPct:n(r[13],true),shares:n(r[14]),combined:n(r[15],true),pct:n(r[16],true),change:t(r[17]),date});
  }
  return {data:out,date};
@@ -47,10 +47,10 @@ async function load(){
   fillFilters();kpis();charts();pageNo=0;render();
  }catch(e){console.error(e);$('status').textContent='Gagal membaca file: '+e.message;alert('Gagal membaca Excel: '+e.message)}finally{$('load').disabled=false}
 }
-function fillFilters(){const ss=[...new Set(rows.map(r=>r.code))].sort(),ds=[...new Set(rows.map(r=>r.dom).filter(Boolean))].sort();$('stock').innerHTML='<option value="">Semua kode</option>'+ss.map(v=>'<option>'+esc(v)+'</option>').join('');$('dom').innerHTML='<option value="">Semua domisili</option>'+ds.map(v=>'<option>'+esc(v)+'</option>').join('')}
+function fillFilters(){const ss=[...new Set(rows.map(r=>r.code))].sort(),ds=[...new Set(rows.map(r=>r.dom).filter(Boolean))].sort(),is=[...new Set(rows.map(r=>r.issuer).filter(Boolean))].sort(),cs=[...new Set(rows.map(r=>r.citizenship).filter(Boolean))].sort();$('stock').innerHTML='<option value="">Semua kode</option>'+ss.map(v=>'<option>'+esc(v)+'</option>').join('');$('dom').innerHTML='<option value="">Semua domisili</option>'+ds.map(v=>'<option>'+esc(v)+'</option>').join('');$('issuer').innerHTML='<option value="">Semua emiten</option>'+is.map(v=>'<option>'+esc(v)+'</option>').join('');$('citizenship').innerHTML='<option value="">Semua kebangsaan</option>'+cs.map(v=>'<option>'+esc(v)+'</option>').join('')}
 function filtered(){
- const q=$('q').value.toLowerCase(),s=$('stock').value,na=$('nationality').value,d=$('dom').value,c=$('change').value;
- return rows.filter(r=>(!q||[r.code,r.issuer,r.investor,r.account,r.accountName].join(' ').toLowerCase().includes(q))&&(!s||r.code===s)&&(!na||r.nationality===na)&&(!d||r.dom===d)&&(!c||(c==='yes'&&r.changed)||(c==='no'&&!r.changed)||(c==='up'&&r.delta!=null&&r.delta>0)||(c==='down'&&r.delta!=null&&r.delta<0)||(c==='unmatched'&&comparing&&!r.matchFound))).sort((a,b)=>{const x=a[sortKey]??'',y=b[sortKey]??'';return(typeof x==='number'&&typeof y==='number'?x-y:String(x).localeCompare(String(y),'id'))*sortDir});
+ const q=$('q').value.toLowerCase(),s=$('stock').value,iss=$('issuer').value,na=$('nationality').value,ct=$('citizenship').value,d=$('dom').value,c=$('change').value;
+ return rows.filter(r=>(!q||[r.code,r.issuer,r.investor,r.account,r.accountName,r.address,r.address2,r.citizenship,r.dom].join(' ').toLowerCase().includes(q))&&(!s||r.code===s)&&(!iss||r.issuer===iss)&&(!na||r.nationality===na)&&(!ct||r.citizenship===ct)&&(!d||r.dom===d)&&(!c||(c==='yes'&&r.changed)||(c==='no'&&!r.changed)||(c==='up'&&r.delta!=null&&r.delta>0)||(c==='down'&&r.delta!=null&&r.delta<0)||(c==='unmatched'&&comparing&&!r.matchFound))).sort((a,b)=>{const x=a[sortKey]??'',y=b[sortKey]??'';return(typeof x==='number'&&typeof y==='number'?x-y:String(x).localeCompare(String(y),'id'))*sortDir});
 }
 function kpis(){
  $('rows').textContent=f(rows.filter(r=>r.foundInLatest).length);
@@ -67,15 +67,15 @@ function charts(){
 }
 function render(){
  const a=filtered(),pages=Math.max(1,Math.ceil(a.length/50));pageNo=Math.min(pageNo,pages-1);
- $('body').innerHTML=a.slice(pageNo*50,(pageNo+1)*50).map(r=>'<tr><td>'+esc(r.code)+'</td><td>'+esc(r.issuer)+'</td><td>'+esc(r.investor)+'</td><td>'+esc(r.account)+'</td><td>'+esc(r.nationality||'—')+'</td><td>'+esc(r.dom||'—')+'</td><td>'+f(r.shares)+'</td><td>'+f(r.combined)+'</td><td>'+f(r.pct)+'%</td><td>'+f(r.prevPct)+'%</td><td class="'+(r.delta>0?'up':r.delta<0?'down':'')+'">'+(r.delta>0?'+':'')+f(r.delta)+'</td><td>'+(r.foundInLatest?(comparing&&!r.matchFound?'Tidak cocok di pembanding':(r.changed?'Berubah':'Tidak berubah')):'Tidak ditemukan di laporan terbaru')+'</td></tr>').join('')||'<tr><td colspan="12">Tidak ada baris yang cocok.</td></tr>';
+ $('body').innerHTML=a.slice(pageNo*50,(pageNo+1)*50).map(r=>'<tr><td>'+esc(r.code)+'</td><td>'+esc(r.issuer)+'</td><td>'+esc(r.investor)+'</td><td>'+esc(r.account)+'</td><td>'+esc(r.accountName)+'</td><td>'+esc(r.address)+'</td><td>'+esc(r.address2)+'</td><td>'+esc(r.citizenship)+'</td><td>'+esc(r.nationality||'—')+'</td><td>'+esc(r.dom||'—')+'</td><td>'+f(r.shares)+'</td><td>'+f(r.combined)+'</td><td>'+f(r.pct)+'%</td><td>'+f(r.prevPct)+'%</td><td class="'+(r.delta>0?'up':r.delta<0?'down':'')+'">'+(r.delta>0?'+':'')+f(r.delta)+'</td><td>'+(r.foundInLatest?(comparing&&!r.matchFound?'Tidak cocok di pembanding':(r.changed?'Berubah':'Tidak berubah')):'Tidak ditemukan di laporan terbaru')+'</td></tr>').join('')||'<tr><td colspan="16">Tidak ada baris yang cocok.</td></tr>';
  $('count').textContent=f(a.length)+' baris cocok · '+f(rows.length)+' total termasuk baris yang tidak ditemukan';$('page').textContent='Halaman '+(pageNo+1)+' / '+pages;$('prev').disabled=pageNo===0;$('next').disabled=pageNo>=pages-1;
 }
 function exportCsv(){
- const a=filtered(),cols=[['Kode',r=>r.code],['Emiten',r=>r.issuer],['Pemegang Saham',r=>r.investor],['Pemegang Rekening Efek',r=>r.account],['Nama Rekening Efek',r=>r.accountName],['Status',r=>r.nationality],['Domisili',r=>r.dom],['Jumlah Saham Terbaru',r=>r.shares],['Gabungan Investor',r=>r.combined],['Kepemilikan Terbaru %',r=>r.pct],['Sebelumnya %',r=>r.prevPct],['Selisih p.p.',r=>r.delta],['Status Laporan',r=>r.foundInLatest?'Ditemukan':'Tidak ditemukan'],['Perubahan',r=>r.change]];
+ const a=filtered(),cols=[['Kode',r=>r.code],['Emiten',r=>r.issuer],['Pemegang Saham',r=>r.investor],['Pemegang Rekening Efek',r=>r.account],['Nama Rekening Efek',r=>r.accountName],['Alamat',r=>r.address],['Alamat Lanjutan',r=>r.address2],['Kebangsaan',r=>r.citizenship],['Status Lokal/Asing',r=>r.nationality],['Domisili',r=>r.dom],['Jumlah Saham Terbaru',r=>r.shares],['Gabungan Investor',r=>r.combined],['Kepemilikan Terbaru %',r=>r.pct],['Sebelumnya %',r=>r.prevPct],['Selisih p.p.',r=>r.delta],['Status Laporan',r=>r.foundInLatest?'Ditemukan':'Tidak ditemukan'],['Perubahan',r=>r.change]];
  const csv=[cols.map(c=>'"'+c[0]+'"').join(';'),...a.map(r=>cols.map(c=>'"'+String(c[1](r)??'').replace(/"/g,'""')+'"').join(';'))].join('\r\n');
  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='idx-ownership-filtered.csv';link.click();URL.revokeObjectURL(url);
 }
 $('load').addEventListener('click',load);
-['q','stock','nationality','dom','change'].forEach(id=>$(id).addEventListener(id==='q'?'input':'change',()=>{pageNo=0;render()}));
+['q','stock','issuer','nationality','citizenship','dom','change'].forEach(id=>$(id).addEventListener(id==='q'?'input':'change',()=>{pageNo=0;render()}));
 $('prev').onclick=()=>{pageNo=Math.max(0,pageNo-1);render()};$('next').onclick=()=>{pageNo++;render()};$('export').onclick=exportCsv;
 document.querySelectorAll('th[data-k]').forEach(th=>th.addEventListener('click',()=>{const k=th.dataset.k;if(k===sortKey)sortDir*=-1;else{sortKey=k;sortDir=1}render()}));
